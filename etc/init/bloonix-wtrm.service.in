@@ -1,0 +1,17 @@
+[Unit]
+Description=Bloonix Server
+After=network.target
+
+[Service]
+Type=forking
+PIDFile=@@RUNDIR@@/bloonix/bloonix-wtrm.pid
+ExecStartPre=@@USRLIBDIR@@/bloonix/bin/bloonix-pre-start @@CACHEDIR@@/bloonix @@LOGDIR@@/bloonix @@RUNDIR@@/bloonix @@SRVDIR@@/bloonix/wtrm
+ExecStart=/usr/bin/bloonix-wtrm --pid-file @@RUNDIR@@/bloonix/bloonix-wtrm.pid --config-file @@CONFDIR@@/bloonix/wtrm/main.conf
+ExecReload=/bin/kill -1 $MAINPID
+ExecStop=/bin/kill -15 $MAINPID
+PrivateTmp=true
+TimeoutStartSec=5
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

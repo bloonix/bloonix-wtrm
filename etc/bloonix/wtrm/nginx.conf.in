@@ -1,0 +1,23 @@
+#server {
+#    listen 8444;
+#    server_name bloonix-wtrm.localhost;
+#
+#    access_log /var/log/nginx/bloonix-wtrm.access.log;
+#    error_log /var/log/nginx/bloonix-wtrm.error.log;
+#
+#    location / {
+#        expires off;
+#        include /etc/nginx/fastcgi_params;
+#        root @@SRVDIR@@/bloonix/wtrm;
+#        fastcgi_pass 127.0.0.1:9006;
+#    }
+#
+#    ssl on;
+#    ssl_certificate /etc/nginx/ssl/wtrm.crt;
+#    ssl_certificate_key /etc/nginx/ssl/wtrm.key;
+#}
+
+# Create an SSL certificate...
+#   mkdir /etc/nginx/ssl
+#   cd /etc/nginx/ssl
+#   openssl req -new -x509 -nodes -out wtrm.crt -keyout wtrm.key

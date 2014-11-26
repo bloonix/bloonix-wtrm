@@ -1,0 +1,319 @@
+#!@@PERL@@
+
+=head1 NAME
+
+bloonix-wtrm - Web transaction server.
+
+=head1 SYNOPSIS
+
+    bloonix-wtrm
+
+=head1 REPORTING BUGS
+
+Please report all bugs to <support(at)bloonix.de>.
+
+=head1 AUTHOR
+
+Jonny Schulz <support(at)bloonix.de>.
+
+=head1 POWERED BY
+
+     _    __ _____ _____ __  __ __ __   __
+    | |__|  |     |     |  \|  |__|\  \/  /
+    |  . |  |  |  |  |  |      |  | >    <
+    |____|__|_____|_____|__|\__|__|/__/\__\
+
+=head1 COPYRIGHT
+
+Copyright (C) 20012-2014 by Jonny Schulz. All rights reserved.
+
+=cut
+
+use strict;
+use warnings;
+use Digest::SHA qw();
+use Getopt::Long qw(:config no_ignore_case);
+use Log::Handler;
+use Params::Validate qw();
+use Time::HiRes qw();
+use JSON;
+
+use Bloonix::Config;
+use Bloonix::FCGI;
+use Bloonix::HangUp;
+
+use base qw(Bloonix::Accessor);
+__PACKAGE__->mk_accessors(qw/log json fcgi cgi config/);
+__PACKAGE__->run();
+
+our $VERSION = "0.1";
+
+sub run {
+    my $class = shift;
+    my $self = bless {}, $class;
+
+    $self->init;
+    $self->fcgi( Bloonix::FCGI->new($self->config->{"proc_manager"}) );
+
+    while (my $cgi = $self->fcgi->accept) {
+        print "Content-Type: application/json\n\n";
+        my $time = Time::HiRes::gettimeofday();
+        my $path = $cgi->path_info;
+        $self->cgi($cgi);
+        $self->log->set_pattern("%X", "X", $self->cgi->remote_addr);
+        $self->log->notice("request started (${time}s)");
+        $self->process_path;
+        $time = sprintf("%.3f", Time::HiRes::gettimeofday() - $time);
+        $self->log->notice("request finished (${time}s)");
+    }
+}
+
+sub init {
+    my $self = shift;
+
+    $self->get_argv;
+    $self->get_config;
+    $self->hang_up;
+    $self->init_logger;
+    $self->json( JSON->new );
+}
+
+sub get_argv {
+    my $self = shift;
+    my $config = "@@CONFDIR@@/bloonix/wtrm/main.conf";
+    my $pidfile = "@@RUNDIR@@/bloonix/bloonix-wtrm.pid";
+    my $version = undef;
+    my $help = undef;
+
+    GetOptions(
+        "c|config-file=s" => \$config,
+        "p|pid-file=s" => \$pidfile,
+        "h|help" => \$help,
+        "v|version" => \$version,
+    ) or exit 1;
+
+    if ($help) {
+        print "Usage: bloonix-wtrm [ options ]\n";
+        print "-c, --config-file <config>\n";
+        print "    The configuration file.\n";
+        print "    Default: @@CONFDIR@@/bloonix/wtrm/main.conf\n";
+        print "-p, --pid-file <file>\n";
+        print "    Where to store the daemon pid.\n";
+        print "    Default: @@RUNDIR@@/bloonix/bloonix-wtrm.pid\n";
+        print "-v, --version\n";
+        print "    Print the version number.\n";
+        print "-h, --help\n";
+        print "    Print the help.\n";
+        exit 0;
+    }
+
+    if ($version) {
+        print "Bloonix wtrm v$VERSION\n";
+        exit 0;
+    }
+
+    if ($config) {
+        $self->{config_file} = $config;
+    }
+
+    if ($pidfile) {
+        $self->{pid_file} = $pidfile;
+    }
+}
+
+sub init_logger {
+    my $self = shift;
+
+    $self->log( Log::Handler->create_logger("bloonix") );
+    $self->log->set_pattern("%X", "X", "n/a");
+    $self->log->config(config => $self->config->{logger});
+}
+
+sub get_config {
+    my $self = shift;
+
+    my $config = Bloonix::Config->parse($self->{config_file});
+
+    $self->config(
+        $self->validate($config)
+    );
+}
+
+sub hang_up {
+    my $self = shift;
+
+    Bloonix::HangUp->now(
+        user => $self->config->{user},
+        group => $self->config->{group},
+        pid_file => $self->{pid_file}
+    );
+}
+
+sub process_path {
+    my $self = shift;
+    my $path = $self->cgi->path_info;
+    my $wtrm_api_key = $self->config->{wtrm_api_key};
+
+    if ($path =~ s!^/$wtrm_api_key!!) {
+        $self->log->notice("process path $path");
+        if ($path eq "/ping") {
+            $self->pong;
+        } elsif ($path eq "/test") {
+            $self->test;
+        } elsif ($path eq "/quick") {
+            $self->test(1);
+        } elsif ($path eq "/result") {
+            $self->result;
+        } else {
+            $self->nopath;
+        }
+    } else {
+        $self->noauth;
+    }
+}
+
+sub pong {
+    my $self = shift;
+
+    print $self->json->encode({ status => "ok", message => "pong" });
+}
+
+sub test {
+    my ($self, $quick) = @_;
+
+    my $data = $self->cgi->jsondata;
+    my $key = Digest::SHA::sha256_hex(Time::HiRes::gettimeofday() . $$ . int(rand(1000000)));
+    my $config_json = "/tmp/bloonix-wtrm-config-$key.json";
+    my $output_json = "/tmp/bloonix-wtrm-output-$key.json";
+
+    $self->log->notice("execute wtrm workflow");
+    $self->log->dump(notice => $data);
+
+    open my $fh, ">", $config_json
+        or die "unable to open file '$config_json' - $!";
+    print $fh $self->json->encode($data);
+    close $fh;
+
+    my ($phantomjs, $bloonix_wtrm_js) = $self->find_phantomjs;
+
+    if (!$phantomjs) {
+        print $self->json->encode({ status => "err", message => "command 'phantomjs' not found" });
+        return;
+    }
+
+    if (!$bloonix_wtrm_js) {
+        print $self->json->encode({ status => "err", message => "javascript file 'bloonix-wtrm.js' not found" });
+        return;
+    }
+
+    my $command = "$phantomjs --ssl-protocol=tlsv1 --ignore-ssl-errors=yes $bloonix_wtrm_js file=$config_json";
+
+    if ($quick) {
+        $command .= " noimg=yes";
+    }
+
+    system("$command 1>$output_json 2>&1 &");
+    print $self->json->encode({ status => "ok", data => $key });
+}
+
+sub find_phantomjs {
+    my ($phantomjs, $bloonix_wtrm_js);
+
+    if (-e "/usr/local/lib/bloonix/bin/phantomjs") {
+        $phantomjs = "/usr/local/lib/bloonix/bin/phantomjs";
+    } elsif (-e "/usr/lib/bloonix/bin/phantomjs") {
+        $phantomjs = "/usr/lib/bloonix/bin/phantomjs";
+    } else {
+        $phantomjs = qx{which phantomjs};
+        chomp $phantomjs;
+    }
+
+    if (-e "/usr/local/lib/bloonix/js/bloonix-wtrm.js") {
+        $bloonix_wtrm_js = "/usr/local/lib/bloonix/js/bloonix-wtrm.js";
+    } elsif (-e "/usr/lib/bloonix/js/bloonix-wtrm.js") {
+        $bloonix_wtrm_js = "/usr/lib/bloonix/js/bloonix-wtrm.js";
+    }
+
+    return ($phantomjs, $bloonix_wtrm_js);
+}
+
+sub result {
+    my $self = shift;
+    my $opts = $self->cgi->jsondata;
+    my $timeout = time + 10;
+    my @data;
+
+    while (time < $timeout) {
+        if (open my $fh, "<", "/tmp/bloonix-wtrm-output-$opts->{key}.json") {
+            my $i = 1;
+            while (my $row = <$fh>) {
+                if ($i >= $opts->{num}) {
+                    push @data, $row;
+                }
+                $i++;
+            }
+            close $fh;
+            last if @data;
+        }
+
+        Time::HiRes::usleep 200_000;
+    }
+
+    eval {
+        chomp @data;
+        foreach my $row (@data) {
+            $row = $self->json->decode($row);
+            if ($row->{status} && $row->{status} eq "done") {
+                unlink "/tmp/bloonix-wtrm-config-$opts->{key}.json";
+                unlink "/tmp/bloonix-wtrm-output-$opts->{key}.json";
+            }
+        }
+    };
+
+    if ($@) {
+        $self->log->error($@);
+        $self->log->dump(error => \@data);
+    }
+
+    print $self->json->encode({ status => "ok", data => \@data });
+}
+
+sub nopath {
+    my $self = shift;
+
+    print $self->json->encode({ status => "err", message => "the requested site does not exists" });
+}
+
+sub noauth {
+    my $self = shift;
+
+    print $self->json->encode({ status => "err", message => "unauthorized access" });
+}
+
+sub validate {
+    my $self = shift;
+
+    my %opts = Params::Validate::validate(@_, {
+        wtrm_api_key => {
+            type => Params::Validate::SCALAR,
+            regex => qr/^.{32,}\z/
+        },
+        proc_manager => {
+            type => Params::Validate::HASHREF
+        },
+        user => {
+            type => Params::Validate::SCALAR,
+            default => "bloonix",
+        },
+        group => {
+            type => Params::Validate::SCALAR,
+            default => "bloonix",
+        },
+        logger => {
+            type => Params::Validate::HASHREF,
+            optional => 1,
+        }
+    });
+
+    return \%opts;
+}
