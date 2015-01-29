@@ -1,7 +1,7 @@
 Summary: Bloonix wtrm daemon
 Name: bloonix-wtrm
 Version: 0.3
-Release: 1%{dist}
+Release: 2%{dist}
 License: Commercial
 Group: Utilities/System
 Distribution: RHEL and CentOS
@@ -87,16 +87,16 @@ if [ -e "/etc/nginx/conf.d" ] && [ ! -e "/etc/nginx/conf.d/bloonix-wtrm.conf" ] 
 fi
 
 %preun
+if [ $1 -eq 0 ]; then
 %if %{?with_systemd}
 systemctl --no-reload disable bloonix-wtrm.service
 systemctl stop bloonix-wtrm.service
 systemctl daemon-reload
 %else
-if [ $1 -eq 0 ]; then
     /sbin/service bloonix-wtrm stop &>/dev/null || :
     /sbin/chkconfig --del bloonix-wtrm
-fi
 %endif
+fi
 
 %clean
 rm -rf %{buildroot}
@@ -129,5 +129,7 @@ rm -rf %{buildroot}
 %doc %attr(0444, root, root) %{docdir}/LICENSE
 
 %changelog
+* Thu Jan 29 2015 Jonny Schulz <js@bloonix.de> - 0.3-2
+- Fixed %preun.
 * Wed Nov 26 2014 Jonny Schulz <js@bloonix.de> - 0.3-1
 - First DEB/RPM release.
