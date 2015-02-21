@@ -1,7 +1,7 @@
 Summary: Bloonix wtrm daemon
 Name: bloonix-wtrm
 Version: 0.3
-Release: 2%{dist}
+Release: 1%{dist}
 License: Commercial
 Group: Utilities/System
 Distribution: RHEL and CentOS

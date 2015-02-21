@@ -33,8 +33,6 @@ install:
 	done;
 
 	./install-sh -d -m 0755 $(PREFIX)/bin;
-	./install-sh -d -m 0755 -o root -g $(GROUPNAME) $(SRVDIR)/bloonix;
-	./install-sh -d -m 0755 -o root -g $(GROUPNAME) $(SRVDIR)/bloonix/wtrm;
 	./install-sh -d -m 0755 -o root -g root $(CONFDIR)/bloonix;
 	./install-sh -d -m 0755 -o root -g root $(CONFDIR)/bloonix/wtrm;
 
