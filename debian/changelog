@@ -1,3 +1,9 @@
+bloonix-wtrm (0.4-1) unstable; urgency=low
+
+    * Path /srv/bloonix/wtrm removed.
+
+ -- Jonny Schulz <js@bloonix.de>  Mon, 09 Mar 2015 18:19:51 +0100
+
 bloonix-wtrm (0.3-1) unstable; urgency=low
 
     * First DEB/RPM release.

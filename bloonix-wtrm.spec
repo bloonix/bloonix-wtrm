@@ -1,6 +1,6 @@
 Summary: Bloonix wtrm daemon
 Name: bloonix-wtrm
-Version: 0.3
+Version: 0.4
 Release: 1%{dist}
 License: Commercial
 Group: Utilities/System
@@ -129,6 +129,8 @@ rm -rf %{buildroot}
 %doc %attr(0444, root, root) %{docdir}/LICENSE
 
 %changelog
+* Mon Mar 09 2015 Jonny Schulz <js@bloonix.de> - 0.4-1
+- Path /srv/bloonix/wtrm removed.
 * Thu Jan 29 2015 Jonny Schulz <js@bloonix.de> - 0.3-2
 - Fixed %preun.
 * Wed Nov 26 2014 Jonny Schulz <js@bloonix.de> - 0.3-1
