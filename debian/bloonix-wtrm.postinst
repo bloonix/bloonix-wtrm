@@ -26,10 +26,14 @@ if [ ! -e "/etc/bloonix/wtrm/main.conf" ] ; then
     chmod 640 /etc/bloonix/wtrm/main.conf
 fi
 
-if [ -e "/etc/nginx/conf.d" ] && [ ! -e "/etc/nginx/conf.d/bloonix-wtrm.conf" ] ; then
-    cp /usr/lib/bloonix/etc/wtrm/nginx.conf /etc/nginx/conf.d/bloonix-wtrm.conf
-    chmod 644 /etc/nginx/conf.d/bloonix-wtrm.conf
-    chown root:root /etc/nginx/conf.d/bloonix-wtrm.conf
+if [ ! -e "/etc/bloonix/wtrm/pki" ] ; then
+    echo "create /etc/bloonix/wtrm/pki/*"
+    mkdir -p /etc/bloonix/wtrm/pki
+    chown root:bloonix /etc/bloonix/wtrm/pki
+    chmod 750 /etc/bloonix/wtrm/pki
+    openssl req -new -x509 -nodes -out /etc/bloonix/wtrm/pki/server.cert -keyout /etc/bloonix/wtrm/pki/server.key -batch
+    chown root:bloonix /etc/bloonix/wtrm/pki/server.key /etc/bloonix/wtrm/pki/server.cert
+    chmod 640 /etc/bloonix/wtrm/pki/server.key /etc/bloonix/wtrm/pki/server.cert
 fi
 
 echo "Starting (condrestart) bloonix-wtrm..";

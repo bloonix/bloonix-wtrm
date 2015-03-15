@@ -16,6 +16,7 @@ Source0: http://download.bloonix.de/sources/%{name}-%{version}.tar.gz
 Requires: bloonix-core
 Requires: bloonix-fcgi
 Requires: bloonix-plugins-wtrm
+Requires: openssl
 Requires: perl-JSON-XS
 Requires: perl(Getopt::Long)
 Requires: perl(JSON)
@@ -82,8 +83,14 @@ if [ ! -e "/etc/bloonix/wtrm/main.conf" ] ; then
     chmod 640 /etc/bloonix/wtrm/main.conf
 fi
 
-if [ -e "/etc/nginx/conf.d" ] && [ ! -e "/etc/nginx/conf.d/bloonix-wtrm.conf" ] ; then
-    install -c -m 0644 /usr/lib/bloonix/etc/wtrm/nginx.conf /etc/nginx/conf.d/bloonix-wtrm.conf
+if [ ! -e "/etc/bloonix/wtrm/pki" ] ; then
+    echo "create /etc/bloonix/wtrm/pki/*"
+    mkdir -p /etc/bloonix/wtrm/pki
+    chown root:bloonix /etc/bloonix/wtrm/pki
+    chmod 750 /etc/bloonix/wtrm/pki
+    openssl req -new -x509 -nodes -out /etc/bloonix/wtrm/pki/server.cert -keyout /etc/bloonix/wtrm/pki/server.key -batch
+    chown root:bloonix /etc/bloonix/wtrm/pki/server.key /etc/bloonix/wtrm/pki/server.cert
+    chmod 640 /etc/bloonix/wtrm/pki/server.key /etc/bloonix/wtrm/pki/server.cert
 fi
 
 %preun
@@ -108,7 +115,6 @@ rm -rf %{buildroot}
 %dir %attr(0755, root, root) %{blxdir}/etc
 %dir %attr(0755, root, root) %{blxdir}/etc/wtrm
 %{blxdir}/etc/wtrm/main.conf
-%{blxdir}/etc/wtrm/nginx.conf
 %dir %attr(0755, root, root) %{blxdir}/etc/systemd
 %{blxdir}/etc/systemd/bloonix-wtrm.service
 %dir %attr(0755, root, root) %{blxdir}/etc/init.d

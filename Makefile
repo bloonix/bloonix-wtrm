@@ -10,7 +10,6 @@ build:
 		bin/bloonix-wtrm \
 		etc/init/bloonix-wtrm \
 		etc/init/bloonix-wtrm.service \
-		etc/bloonix/wtrm/nginx.conf \
 	; do \
 		cp $$file.in $$file; \
 		sed -i "s!@@PERL@@!$(PERL)!g" $$file; \
@@ -44,7 +43,6 @@ install:
 
 	./install-sh -d -m 0755 $(USRLIBDIR)/bloonix/etc/wtrm;
 	./install-sh -c -m 0644 etc/bloonix/wtrm/main.conf $(USRLIBDIR)/bloonix/etc/wtrm/main.conf;
-	./install-sh -c -m 0644 etc/bloonix/wtrm/nginx.conf $(USRLIBDIR)/bloonix/etc/wtrm/nginx.conf;
 
 	./install-sh -d -m 0755 $(USRLIBDIR)/bloonix/etc/init.d;
 	./install-sh -c -m 0755 etc/init/bloonix-wtrm $(USRLIBDIR)/bloonix/etc/init.d/bloonix-wtrm;
@@ -61,9 +59,6 @@ install:
 	if test "$(BUILDPKG)" = "0" ; then \
 		if test ! -e "$(CONFDIR)/bloonix/wtrm/main.conf" ; then \
 			./install-sh -c -m 0640 -o root -g $(GROUPNAME) etc/bloonix/wtrm/main.conf $(CONFDIR)/bloonix/wtrm/main.conf; \
-		fi; \
-		if test ! -e "$(CONFDIR)/bloonix/wtrm/nginx.conf" ; then \
-			./install-sh -c -m 0640 -o root -g $(GROUPNAME) etc/bloonix/wtrm/nginx.conf $(CONFDIR)/bloonix/wtrm/nginx.conf; \
 		fi; \
 	fi;
 

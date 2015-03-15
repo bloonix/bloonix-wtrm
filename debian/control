@@ -8,6 +8,6 @@ Homepage: http://www.bloonix.de/
 
 Package: bloonix-wtrm
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, bloonix-core, bloonix-fcgi, bloonix-plugins-wtrm, libgetopt-long-descriptive-perl, libjson-perl, libjson-xs-perl, liblog-handler-perl, libparams-validate-perl
+Depends: ${shlibs:Depends}, ${misc:Depends}, bloonix-core, bloonix-fcgi, bloonix-plugins-wtrm, libgetopt-long-descriptive-perl, libjson-perl, libjson-xs-perl, liblog-handler-perl, libparams-validate-perl, openssl
 Description: Bloonix wtrm daemon
  bloonix-wtrm provides the bloonix wtrm daemon.

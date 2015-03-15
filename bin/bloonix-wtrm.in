@@ -39,30 +39,31 @@ use Time::HiRes qw();
 use JSON;
 
 use Bloonix::Config;
-use Bloonix::FCGI;
 use Bloonix::HangUp;
+use Bloonix::IO::SIPC;
+use Bloonix::ProcManager;
 
 use base qw(Bloonix::Accessor);
-__PACKAGE__->mk_accessors(qw/log json fcgi cgi config/);
+__PACKAGE__->mk_accessors(qw/log json io proc req client config/);
 __PACKAGE__->run();
 
-our $VERSION = "0.1";
+our $VERSION = "0.2";
 
 sub run {
     my $class = shift;
     my $self = bless {}, $class;
 
     $self->init;
-    $self->fcgi( Bloonix::FCGI->new($self->config->{"proc_manager"}) );
+    $self->io( Bloonix::IO::SIPC->new($self->config->{"tcp_server"}) );
+    $self->proc( Bloonix::ProcManager->new($self->config->{"proc_manager"}) );
 
-    while (my $cgi = $self->fcgi->accept) {
-        print "Content-Type: application/json\n\n";
+    while (!$self->proc->done) {
         my $time = Time::HiRes::gettimeofday();
-        my $path = $cgi->path_info;
-        $self->cgi($cgi);
-        $self->log->set_pattern("%X", "X", $self->cgi->remote_addr);
+        $self->proc->set_status_waiting;
+        my $client = $self->io->accept or next;
+        $self->log->set_pattern("%X", "X", $client->sock->peeraddr);
         $self->log->notice("request started (${time}s)");
-        $self->process_path;
+        $self->process($client);
         $time = sprintf("%.3f", Time::HiRes::gettimeofday() - $time);
         $self->log->notice("request finished (${time}s)");
     }
@@ -127,6 +128,8 @@ sub init_logger {
     $self->log( Log::Handler->create_logger("bloonix") );
     $self->log->set_pattern("%X", "X", "n/a");
     $self->log->config(config => $self->config->{logger});
+    $SIG{__DIE__} = sub { $self->log->trace(fatal => @_) };
+    $SIG{__WARN__} = sub { $self->log->warning(@_) };
 }
 
 sub get_config {
@@ -149,62 +152,94 @@ sub hang_up {
     );
 }
 
-sub process_path {
-    my $self = shift;
-    my $path = $self->cgi->path_info;
-    my $wtrm_api_key = $self->config->{wtrm_api_key};
+sub process {
+    my ($self, $client) = @_;
 
-    if ($path =~ s!^/$wtrm_api_key!!) {
-        $self->log->notice("process path $path");
-        if ($path eq "/ping") {
-            $self->pong;
-        } elsif ($path eq "/test") {
-            $self->test;
-        } elsif ($path eq "/quick") {
-            $self->test(1);
-        } elsif ($path eq "/result") {
-            $self->result;
-        } else {
-            $self->nopath;
-        }
-    } else {
-        $self->noauth;
+    $self->client($client);
+    $self->req(scalar $client->recv);
+
+    if (!$self->check_request) {
+        return $self->client->send(
+            status => "err",
+            message => "unauthorized access"
+        );
     }
+
+    if ($self->req->{action} !~ /^(ping|test|quick|result)\z/) {
+        return $self->client->send(
+            status => "err",
+            message => "the requested site does not exists"
+        );
+    }
+
+    $self->log->notice("process action", $self->req->{action});
+
+    if ($self->req->{action} eq "ping") {
+        $self->pong;
+    } elsif ($self->req->{action} eq "test") {
+        $self->test;
+    } elsif ($self->req->{action} eq "quick") {
+        $self->test(1);
+    } elsif ($self->req->{action} eq "result") {
+        $self->result;
+    }
+}
+
+sub check_request {
+    my $self = shift;
+
+    if (ref $self->req ne "HASH") {
+        return undef;
+    }
+
+    if (!$self->req->{action}) {
+        return undef;
+    }
+
+    if ($self->req->{action} eq "ping") {
+        return 1;
+    }
+
+    if (!$self->req->{wtrm_api_key} || !$self->config->{wtrm_api_key}) {
+        return undef;
+    }
+
+    if ($self->req->{wtrm_api_key} ne $self->config->{wtrm_api_key}) {
+        return undef;
+    }
+
+    return 1;
 }
 
 sub pong {
     my $self = shift;
 
-    print $self->json->encode({ status => "ok", message => "pong" });
+    $self->client->send(status => "ok", message => "pong");
 }
 
 sub test {
     my ($self, $quick) = @_;
+    my ($phantomjs, $bloonix_wtrm_js) = $self->find_phantomjs;
 
-    my $data = $self->cgi->jsondata;
+    if (!$phantomjs) {
+        return $self->client->send(status => "err", message => "command 'phantomjs' not found");
+    }
+
+    if (!$bloonix_wtrm_js) {
+        return $self->client->send(status => "err", message => "javascript file 'bloonix-wtrm.js' not found");
+    }
+
     my $key = Digest::SHA::sha256_hex(Time::HiRes::gettimeofday() . $$ . int(rand(1000000)));
     my $config_json = "/tmp/bloonix-wtrm-config-$key.json";
     my $output_json = "/tmp/bloonix-wtrm-output-$key.json";
 
     $self->log->notice("execute wtrm workflow");
-    $self->log->dump(notice => $data);
+    $self->log->dump(notice => $self->req);
 
     open my $fh, ">", $config_json
         or die "unable to open file '$config_json' - $!";
-    print $fh $self->json->encode($data);
+    print $fh $self->json->encode($self->req->{data});
     close $fh;
-
-    my ($phantomjs, $bloonix_wtrm_js) = $self->find_phantomjs;
-
-    if (!$phantomjs) {
-        print $self->json->encode({ status => "err", message => "command 'phantomjs' not found" });
-        return;
-    }
-
-    if (!$bloonix_wtrm_js) {
-        print $self->json->encode({ status => "err", message => "javascript file 'bloonix-wtrm.js' not found" });
-        return;
-    }
 
     my $command = "$phantomjs --ssl-protocol=tlsv1 --ignore-ssl-errors=yes $bloonix_wtrm_js file=$config_json";
 
@@ -213,7 +248,7 @@ sub test {
     }
 
     system("$command 1>$output_json 2>&1 &");
-    print $self->json->encode({ status => "ok", data => $key });
+    $self->client->send(status => "ok", data => $key);
 }
 
 sub find_phantomjs {
@@ -239,7 +274,7 @@ sub find_phantomjs {
 
 sub result {
     my $self = shift;
-    my $opts = $self->cgi->jsondata;
+    my $opts = $self->req;
     my $timeout = time + 10;
     my @data;
 
@@ -275,19 +310,7 @@ sub result {
         $self->log->dump(error => \@data);
     }
 
-    print $self->json->encode({ status => "ok", data => \@data });
-}
-
-sub nopath {
-    my $self = shift;
-
-    print $self->json->encode({ status => "err", message => "the requested site does not exists" });
-}
-
-sub noauth {
-    my $self = shift;
-
-    print $self->json->encode({ status => "err", message => "unauthorized access" });
+    $self->client->send(status => "ok", data => \@data);
 }
 
 sub validate {
@@ -301,19 +324,65 @@ sub validate {
         proc_manager => {
             type => Params::Validate::HASHREF
         },
+        tcp_server => {
+            type => Params::Validate::HASHREF
+        },
         user => {
             type => Params::Validate::SCALAR,
-            default => "bloonix",
+            default => "bloonix"
         },
         group => {
             type => Params::Validate::SCALAR,
-            default => "bloonix",
+            default => "bloonix"
         },
         logger => {
             type => Params::Validate::HASHREF,
-            optional => 1,
+            optional => 1
         }
     });
+
+    $opts{tcp_server} = $self->validate_tcp_server($opts{tcp_server});
+
+    return \%opts;
+}
+
+sub validate_tcp_server {
+    my $class = shift;
+
+    my %opts = Params::Validate::validate(@_, {
+        host => {
+            type => Params::Validate::SCALAR,
+            optional => 1
+        },
+        port => {
+            type => Params::Validate::SCALAR,
+            default => 5470
+        },
+        use_ssl => {
+            type => Params::Validate::SCALAR,
+            default => 1
+        },
+        ssl_key_file => {
+            type => Params::Validate::SCALAR,
+            default => "/etc/bloonix/wtrm/pki/server.key"
+        },
+        ssl_cert_file => {
+            type => Params::Validate::SCALAR,
+            default => "/etc/bloonix/wtrm/pki/server.cert"
+        },
+        mode => {
+            type => Params::Validate::SCALAR,
+            default => "failover"
+        }
+    });
+
+    if ($opts{host}) {
+        $opts{localaddr} = delete $opts{host};
+    }
+
+    $opts{localport} = delete $opts{port};
+    $opts{auto_connect} = 1;
+    $opts{listen} = 1;
 
     return \%opts;
 }
