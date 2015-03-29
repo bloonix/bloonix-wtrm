@@ -1,4 +1,4 @@
-bloonix-wtrm (0.5) released at 2015-XX-XX
+bloonix-wtrm (0.5) released at 2015-03-21
 
     * Switched from FCGI to Bloonix::IO::SIPC.
 

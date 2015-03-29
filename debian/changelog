@@ -1,3 +1,9 @@
+bloonix-wtrm (0.5-1) unstable; urgency=low
+
+    * Switched from FCGI to Bloonix::IO::SIPC.
+
+ -- Jonny Schulz <js@bloonix.de>  Sat, 21 Mar 2015 22:17:45 +0100
+
 bloonix-wtrm (0.4-1) unstable; urgency=low
 
     * Path /srv/bloonix/wtrm removed.
