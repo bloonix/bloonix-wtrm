@@ -343,6 +343,10 @@ sub validate {
 
     $opts{tcp_server} = $self->validate_tcp_server($opts{tcp_server});
 
+    if (!$opts{proc_manager}{lockfile}) {
+        $opts{proc_manager}{lockfile} = "/var/lib/bloonix/ipc/wtrm.%P.lock";
+    }
+
     return \%opts;
 }
 
