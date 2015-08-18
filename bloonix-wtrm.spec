@@ -135,6 +135,7 @@ rm -rf %{buildroot}
 %changelog
 * Tue Aug 18 2015 Jonny Schulz <js@bloonix.de> - 0.6-1
 - Fixed %preun section in spec file.
+- Moved the creation of user bloonix into the core package.
 * Sat Mar 21 2015 Jonny Schulz <js@bloonix.de> - 0.5-1
 - Switched from FCGI to Bloonix::IO::SIPC.
 * Mon Mar 09 2015 Jonny Schulz <js@bloonix.de> - 0.4-1
