@@ -60,11 +60,6 @@ install -p -D -m 0644 %{buildroot}%{blxdir}/etc/systemd/bloonix-wtrm.service %{b
 install -p -D -m 0755 %{buildroot}%{blxdir}/etc/init.d/bloonix-wtrm %{buildroot}%{initdir}/bloonix-wtrm
 %endif
 
-%pre
-getent group bloonix >/dev/null || /usr/sbin/groupadd bloonix
-getent passwd bloonix >/dev/null || /usr/sbin/useradd \
-    bloonix -g bloonix -s /sbin/nologin -d /var/run/bloonix -r
-
 %post
 if [ ! -e "/etc/bloonix/wtrm/main.conf" ] ; then
     mkdir -p /etc/bloonix/wtrm
