@@ -1,6 +1,6 @@
 Summary: Bloonix wtrm daemon
 Name: bloonix-wtrm
-Version: 0.5
+Version: 0.6
 Release: 1%{dist}
 License: Commercial
 Group: Utilities/System
@@ -54,7 +54,7 @@ install -d -m 0750 ${RPM_BUILD_ROOT}%{rundir}
 install -c -m 0444 LICENSE ${RPM_BUILD_ROOT}%{docdir}/
 install -c -m 0444 ChangeLog ${RPM_BUILD_ROOT}%{docdir}/
 
-%if %{?with_systemd}
+%if 0%{?with_systemd}
 install -p -D -m 0644 %{buildroot}%{blxdir}/etc/systemd/bloonix-wtrm.service %{buildroot}%{_unitdir}/bloonix-wtrm.service
 %else
 install -p -D -m 0755 %{buildroot}%{blxdir}/etc/init.d/bloonix-wtrm %{buildroot}%{initdir}/bloonix-wtrm
@@ -66,14 +66,6 @@ getent passwd bloonix >/dev/null || /usr/sbin/useradd \
     bloonix -g bloonix -s /sbin/nologin -d /var/run/bloonix -r
 
 %post
-%if %{?with_systemd}
-systemctl preset bloonix-wtrm.service
-systemctl condrestart bloonix-wtrm.service
-%else
-/sbin/chkconfig --add bloonix-wtrm
-/sbin/service bloonix-wtrm condrestart &>/dev/null
-%endif
-
 if [ ! -e "/etc/bloonix/wtrm/main.conf" ] ; then
     mkdir -p /etc/bloonix/wtrm
     chown root:root /etc/bloonix /etc/bloonix/wtrm
@@ -93,17 +85,28 @@ if [ ! -e "/etc/bloonix/wtrm/pki" ] ; then
     chmod 640 /etc/bloonix/wtrm/pki/server.key /etc/bloonix/wtrm/pki/server.cert
 fi
 
-%preun
-if [ $1 -eq 0 ]; then
-%if %{?with_systemd}
-systemctl --no-reload disable bloonix-wtrm.service
-systemctl stop bloonix-wtrm.service
-systemctl daemon-reload
+%if 0%{?with_systemd}
+%systemd_post bloonix-wtrm.service
+systemctl condrestart bloonix-wtrm.service
 %else
+/sbin/chkconfig --add bloonix-wtrm
+/sbin/service bloonix-wtrm condrestart &>/dev/null
+%endif
+
+%preun
+%if 0%{?with_systemd}
+%systemd_preun bloonix-wtrm.service
+%else
+if [ $1 -eq 0 ]; then
     /sbin/service bloonix-wtrm stop &>/dev/null || :
     /sbin/chkconfig --del bloonix-wtrm
-%endif
 fi
+%endif
+
+%postun
+%if 0%{?with_systemd}
+%systemd_postun
+%endif
 
 %clean
 rm -rf %{buildroot}
@@ -124,7 +127,7 @@ rm -rf %{buildroot}
 
 %{_bindir}/bloonix-wtrm
 
-%if %{?with_systemd} == 1
+%if 0%{?with_systemd}
 %{_unitdir}/bloonix-wtrm.service
 %else
 %{initdir}/bloonix-wtrm
@@ -135,6 +138,8 @@ rm -rf %{buildroot}
 %doc %attr(0444, root, root) %{docdir}/LICENSE
 
 %changelog
+* Tue Aug 18 2015 Jonny Schulz <js@bloonix.de> - 0.6-1
+- Fixed %preun section in spec file.
 * Sat Mar 21 2015 Jonny Schulz <js@bloonix.de> - 0.5-1
 - Switched from FCGI to Bloonix::IO::SIPC.
 * Mon Mar 09 2015 Jonny Schulz <js@bloonix.de> - 0.4-1
