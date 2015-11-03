@@ -20,6 +20,7 @@ build:
 		sed -i "s!@@USRLIBDIR@@!$(USRLIBDIR)!" $$file; \
 		sed -i "s!@@SRVDIR@@!$(SRVDIR)!g" $$file; \
 		sed -i "s!@@LOGDIR@@!$(LOGDIR)!g" $$file; \
+		sed -i "s!@@LIBDIR@@!$(LOGDIR)!g" $$file; \
 	done;
 
 test:
@@ -51,7 +52,7 @@ install:
 	./install-sh -c -m 0755 etc/init/bloonix-wtrm.service $(USRLIBDIR)/bloonix/etc/systemd/bloonix-wtrm.service;
 
 	if test -d /usr/lib/systemd/system ; then \
-		./install-sh -c -m 0644 etc/init/bloonix-wtrm.service /usr/lib/systemd/system/; \
+		./install-sh -c -m 0644 etc/init/bloonix-wtrm.service $(DESTDIR)/usr/lib/systemd/system/; \
 	elif test -d /etc/init.d ; then \
 		./install-sh -c -m 0755 etc/init/bloonix-wtrm $(INITDIR)/bloonix-wtrm; \
 	fi;

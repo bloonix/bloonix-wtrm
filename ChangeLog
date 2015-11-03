@@ -1,3 +1,7 @@
+bloonix-wtrm (0.7) released at 2015-11-03
+
+    * Fixed: placeholder @@LIBDIR@@ is now replaced.
+
 bloonix-wtrm (0.6) released at 2015-08-18
 
     * Fixed %preun section in spec file.
