@@ -1,3 +1,9 @@
+bloonix-wtrm (0.7-1) unstable; urgency=low
+
+    * Fixed: placeholder @@LIBDIR@@ is now replaced.
+
+ -- Jonny Schulz <js@bloonix.de>  Tue, 03 Nov 2015 11:23:51 +0100
+
 bloonix-wtrm (0.6-1) unstable; urgency=low
 
     * Fixed %preun section in spec file.

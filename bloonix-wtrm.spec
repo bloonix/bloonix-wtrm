@@ -1,6 +1,6 @@
 Summary: Bloonix wtrm daemon
 Name: bloonix-wtrm
-Version: 0.6
+Version: 0.7
 Release: 1%{dist}
 License: Commercial
 Group: Utilities/System
@@ -133,6 +133,8 @@ rm -rf %{buildroot}
 %doc %attr(0444, root, root) %{docdir}/LICENSE
 
 %changelog
+* Tue Nov 03 2015 Jonny Schulz <js@bloonix.de> - 0.7-1
+- Fixed: placeholder @@LIBDIR@@ is now replaced.
 * Tue Aug 18 2015 Jonny Schulz <js@bloonix.de> - 0.6-1
 - Fixed %preun section in spec file.
 - Moved the creation of user bloonix into the core package.

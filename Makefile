@@ -19,8 +19,8 @@ build:
 		sed -i "s!@@RUNDIR@@!$(RUNDIR)!g" $$file; \
 		sed -i "s!@@USRLIBDIR@@!$(USRLIBDIR)!" $$file; \
 		sed -i "s!@@SRVDIR@@!$(SRVDIR)!g" $$file; \
+		sed -i "s!@@LIBDIR@@!$(LIBDIR)!g" $$file; \
 		sed -i "s!@@LOGDIR@@!$(LOGDIR)!g" $$file; \
-		sed -i "s!@@LIBDIR@@!$(LOGDIR)!g" $$file; \
 	done;
 
 test:
@@ -51,7 +51,8 @@ install:
 	./install-sh -d -m 0755 $(USRLIBDIR)/bloonix/etc/systemd;
 	./install-sh -c -m 0755 etc/init/bloonix-wtrm.service $(USRLIBDIR)/bloonix/etc/systemd/bloonix-wtrm.service;
 
-	if test -d /usr/lib/systemd/system ; then \
+	if test -d /usr/lib/systemd ; then \
+		./install-sh -d -m 0755 $(DESTDIR)/usr/lib/systemd/system/; \
 		./install-sh -c -m 0644 etc/init/bloonix-wtrm.service $(DESTDIR)/usr/lib/systemd/system/; \
 	elif test -d /etc/init.d ; then \
 		./install-sh -c -m 0755 etc/init/bloonix-wtrm $(INITDIR)/bloonix-wtrm; \
@@ -60,6 +61,9 @@ install:
 	if test "$(BUILDPKG)" = "0" ; then \
 		if test ! -e "$(CONFDIR)/bloonix/wtrm/main.conf" ; then \
 			./install-sh -c -m 0640 -o root -g $(GROUPNAME) etc/bloonix/wtrm/main.conf $(CONFDIR)/bloonix/wtrm/main.conf; \
+		fi; \
+		if test -d /usr/lib/systemd ; then \
+			systemctl daemon-reload; \
 		fi; \
 	fi;
 
