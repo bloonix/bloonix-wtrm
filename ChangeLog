@@ -1,3 +1,7 @@
+bloonix-wtrm (0.9) released at 2016-03-29
+
+    * Fixed systemctl errors.
+
 bloonix-wtrm (0.8) released at 2016-03-28
 
     * Fixed systemd/sysvinit/upstart installation routines.

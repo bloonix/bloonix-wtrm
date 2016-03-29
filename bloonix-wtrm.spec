@@ -1,6 +1,6 @@
 Summary: Bloonix wtrm daemon
 Name: bloonix-wtrm
-Version: 0.8
+Version: 0.9
 Release: 1%{dist}
 License: Commercial
 Group: Utilities/System
@@ -116,6 +116,8 @@ rm -rf %{buildroot}
 %doc %attr(0444, root, root) %{docdir}/LICENSE
 
 %changelog
+* Tue Mar 29 2016 Jonny Schulz <js@bloonix.de> - 0.9-1
+- Fixed systemctl errors.
 * Mon Mar 28 2016 Jonny Schulz <js@bloonix.de> - 0.8-1
 - Fixed systemd/sysvinit/upstart installation routines.
 * Tue Nov 03 2015 Jonny Schulz <js@bloonix.de> - 0.7-1

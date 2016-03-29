@@ -1,3 +1,9 @@
+bloonix-wtrm (0.9-1) unstable; urgency=low
+
+    * Fixed systemctl errors.
+
+ -- Jonny Schulz <js@bloonix.de>  Tue, 29 Mar 2016 12:39:05 +0200
+
 bloonix-wtrm (0.8-1) unstable; urgency=low
 
     * Fixed systemd/sysvinit/upstart installation routines.
