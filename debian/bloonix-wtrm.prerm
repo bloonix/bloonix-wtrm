@@ -2,25 +2,23 @@
 
 set -e
 
-WITH_SYSTEMD=0
+if [ "$1" = "remove" ] ; then
+    echo "Removing bloonix-wtrm.."
 
-__remove() {
-    if [ $WITH_SYSTEMD -eq 1 ] ; then
-        echo "Removing bloonix-wtrm.."
+    if [ -e "/lib/systemd" ] ; then
         systemctl --no-reload disable bloonix-wtrm.service
-        echo "Stopping (force) bloonix-wtrm.."
+        echo "Stopping bloonix-wtrm.."
         systemctl stop bloonix-wtrm.service
         systemctl daemon-reload
     else
-        echo "Removing bloonix-wtrm.."
         update-rc.d -f bloonix-wtrm remove >/dev/null
-        echo "Stopping (force) bloonix-wtrm.."
-        /etc/init.d/bloonix-wtrm stop
+        echo "Stopping bloonix-wtrm.."
+        if [ -e "/usr/share/upstart" ] ; then
+            service bloonix-wtrm stop
+        else
+            /etc/init.d/bloonix-wtrm stop
+        fi
     fi
-}
-
-case "$1" in
-    remove) __remove ;;
-esac
+fi
 
 exit 0

@@ -1,3 +1,9 @@
+bloonix-wtrm (0.8-1) unstable; urgency=low
+
+    * Fixed systemd/sysvinit/upstart installation routines.
+
+ -- Jonny Schulz <js@bloonix.de>  Mon, 28 Mar 2016 19:36:01 +0200
+
 bloonix-wtrm (0.7-1) unstable; urgency=low
 
     * Fixed: placeholder @@LIBDIR@@ is now replaced.

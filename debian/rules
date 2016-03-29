@@ -11,7 +11,6 @@ export DH_VERBOSE=1
 
 PERL ?= /usr/bin/perl
 BUILDROOT=$(CURDIR)/debian/bloonix-wtrm
-WITH_SYSTEMD=0
 
 configure: configure-stamp
 configure-stamp:
@@ -42,12 +41,6 @@ install: build
 		dh_installdirs
 
 		$(MAKE) install DESTDIR=$(BUILDROOT)
-
-		if test "$(WITH_SYSTEMD)" -eq 1 ; then \
-			install -p -D -m 0644 etc/init/bloonix-wtrm.service $(BUILDROOT)/usr/lib/systemd/system/bloonix-wtrm.service; \
-		else \
-			install -p -D -m 0755 etc/init/bloonix-wtrm $(BUILDROOT)/etc/init.d/bloonix-wtrm; \
-		fi;
 
 # Build architecture-independent files here.
 binary-indep: build install

@@ -1,6 +1,6 @@
 Summary: Bloonix wtrm daemon
 Name: bloonix-wtrm
-Version: 0.7
+Version: 0.8
 Release: 1%{dist}
 License: Commercial
 Group: Utilities/System
@@ -50,7 +50,7 @@ rm -rf %{buildroot}
 %{__make} install DESTDIR=%{buildroot}
 mkdir -p ${RPM_BUILD_ROOT}%{docdir}
 install -d -m 0750 ${RPM_BUILD_ROOT}%{logdir}
-install -d -m 0750 ${RPM_BUILD_ROOT}%{rundir}
+install -d -m 0755 ${RPM_BUILD_ROOT}%{rundir}
 install -c -m 0444 LICENSE ${RPM_BUILD_ROOT}%{docdir}/
 install -c -m 0444 ChangeLog ${RPM_BUILD_ROOT}%{docdir}/
 
@@ -61,25 +61,7 @@ install -p -D -m 0755 %{buildroot}%{blxdir}/etc/init.d/bloonix-wtrm %{buildroot}
 %endif
 
 %post
-if [ ! -e "/etc/bloonix/wtrm/main.conf" ] ; then
-    mkdir -p /etc/bloonix/wtrm
-    chown root:root /etc/bloonix /etc/bloonix/wtrm
-    chmod 755 /etc/bloonix /etc/bloonix/wtrm
-    cp -a /usr/lib/bloonix/etc/wtrm/main.conf /etc/bloonix/wtrm/main.conf
-    chown root:bloonix /etc/bloonix/wtrm/main.conf
-    chmod 640 /etc/bloonix/wtrm/main.conf
-fi
-
-if [ ! -e "/etc/bloonix/wtrm/pki" ] ; then
-    echo "create /etc/bloonix/wtrm/pki/*"
-    mkdir -p /etc/bloonix/wtrm/pki
-    chown root:bloonix /etc/bloonix/wtrm/pki
-    chmod 750 /etc/bloonix/wtrm/pki
-    openssl req -new -x509 -nodes -out /etc/bloonix/wtrm/pki/server.cert -keyout /etc/bloonix/wtrm/pki/server.key -batch
-    chown root:bloonix /etc/bloonix/wtrm/pki/server.key /etc/bloonix/wtrm/pki/server.cert
-    chmod 640 /etc/bloonix/wtrm/pki/server.key /etc/bloonix/wtrm/pki/server.cert
-fi
-
+/usr/bin/bloonix-init-wtrm
 %if 0%{?with_systemd}
 %systemd_post bloonix-wtrm.service
 systemctl condrestart bloonix-wtrm.service
@@ -117,10 +99,11 @@ rm -rf %{buildroot}
 %{blxdir}/etc/systemd/bloonix-wtrm.service
 %dir %attr(0755, root, root) %{blxdir}/etc/init.d
 %{blxdir}/etc/init.d/bloonix-wtrm
-%dir %attr(0750, bloonix, bloonix) %{logdir}
-%dir %attr(0750, bloonix, bloonix) %{rundir}
+%dir %attr(0750, bloonix, root) %{logdir}
+%dir %attr(0755, bloonix, root) %{rundir}
 
 %{_bindir}/bloonix-wtrm
+%{_bindir}/bloonix-init-wtrm
 
 %if 0%{?with_systemd}
 %{_unitdir}/bloonix-wtrm.service
@@ -133,6 +116,8 @@ rm -rf %{buildroot}
 %doc %attr(0444, root, root) %{docdir}/LICENSE
 
 %changelog
+* Mon Mar 28 2016 Jonny Schulz <js@bloonix.de> - 0.8-1
+- Fixed systemd/sysvinit/upstart installation routines.
 * Tue Nov 03 2015 Jonny Schulz <js@bloonix.de> - 0.7-1
 - Fixed: placeholder @@LIBDIR@@ is now replaced.
 * Tue Aug 18 2015 Jonny Schulz <js@bloonix.de> - 0.6-1

@@ -8,6 +8,7 @@ build:
 
 	for file in \
 		bin/bloonix-wtrm \
+		bin/bloonix-init-wtrm \
 		etc/init/bloonix-wtrm \
 		etc/init/bloonix-wtrm.service \
 	; do \
@@ -27,43 +28,27 @@ test:
 
 install:
 
-	# Base Bloonix directories
-	for d in $(CACHEDIR) $(LOGDIR) $(RUNDIR) ; do \
-		./install-sh -d -m 0750 -o $(USERNAME) -g $(GROUPNAME) $$d/bloonix; \
-	done;
-
+	./install-sh -d -m 0750 $(LOGDIR)/bloonix;
+	./install-sh -d -m 0755 $(RUNDIR)/bloonix;
 	./install-sh -d -m 0755 $(PREFIX)/bin;
-	./install-sh -d -m 0755 -o root -g root $(CONFDIR)/bloonix;
-	./install-sh -d -m 0755 -o root -g root $(CONFDIR)/bloonix/wtrm;
-
-	for file in \
-		bloonix-wtrm \
-	; do \
-		./install-sh -c -m 0755 bin/$$file $(PREFIX)/bin/$$file; \
-	done;
-
+	./install-sh -d -m 0755 $(CONFDIR)/bloonix;
+	./install-sh -d -m 0755 $(CONFDIR)/bloonix/wtrm;
+	./install-sh -c -m 0755 bin/bloonix-wtrm $(PREFIX)/bin/bloonix-wtrm;
+	./install-sh -c -m 0755 bin/bloonix-init-wtrm $(PREFIX)/bin/bloonix-init-wtrm;
 	./install-sh -d -m 0755 $(USRLIBDIR)/bloonix/etc/wtrm;
 	./install-sh -c -m 0644 etc/bloonix/wtrm/main.conf $(USRLIBDIR)/bloonix/etc/wtrm/main.conf;
-
 	./install-sh -d -m 0755 $(USRLIBDIR)/bloonix/etc/init.d;
 	./install-sh -c -m 0755 etc/init/bloonix-wtrm $(USRLIBDIR)/bloonix/etc/init.d/bloonix-wtrm;
-
 	./install-sh -d -m 0755 $(USRLIBDIR)/bloonix/etc/systemd;
 	./install-sh -c -m 0755 etc/init/bloonix-wtrm.service $(USRLIBDIR)/bloonix/etc/systemd/bloonix-wtrm.service;
 
-	if test -d /usr/lib/systemd ; then \
-		./install-sh -d -m 0755 $(DESTDIR)/usr/lib/systemd/system/; \
-		./install-sh -c -m 0644 etc/init/bloonix-wtrm.service $(DESTDIR)/usr/lib/systemd/system/; \
-	elif test -d /etc/init.d ; then \
-		./install-sh -c -m 0755 etc/init/bloonix-wtrm $(INITDIR)/bloonix-wtrm; \
-	fi;
-
 	if test "$(BUILDPKG)" = "0" ; then \
-		if test ! -e "$(CONFDIR)/bloonix/wtrm/main.conf" ; then \
-			./install-sh -c -m 0640 -o root -g $(GROUPNAME) etc/bloonix/wtrm/main.conf $(CONFDIR)/bloonix/wtrm/main.conf; \
-		fi; \
 		if test -d /usr/lib/systemd ; then \
+			./install-sh -d -m 0755 $(DESTDIR)/usr/lib/systemd/system/; \
+			./install-sh -c -m 0644 etc/init/bloonix-wtrm.service $(DESTDIR)/usr/lib/systemd/system/; \
 			systemctl daemon-reload; \
+		elif test -d /etc/init.d ; then \
+			./install-sh -c -m 0755 etc/init/bloonix-wtrm $(INITDIR)/bloonix-wtrm; \
 		fi; \
 	fi;
 
