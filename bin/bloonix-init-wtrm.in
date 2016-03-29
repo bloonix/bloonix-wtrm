@@ -1,0 +1,24 @@
+#!/bin/bash
+
+if [ ! -e "/etc/bloonix/wtrm/main.conf" ] ; then
+    mkdir -p /etc/bloonix/wtrm
+    chown root:root /etc/bloonix /etc/bloonix/wtrm
+    chmod 755 /etc/bloonix /etc/bloonix/wtrm
+    cp -a /usr/lib/bloonix/etc/wtrm/main.conf /etc/bloonix/wtrm/main.conf
+    chown root:bloonix /etc/bloonix/wtrm/main.conf
+    chmod 640 /etc/bloonix/wtrm/main.conf
+fi
+
+if [ ! -e "/etc/bloonix/wtrm/pki" ] ; then
+    echo "create /etc/bloonix/wtrm/pki/*"
+    mkdir -p /etc/bloonix/wtrm/pki
+    chown root:bloonix /etc/bloonix/wtrm/pki
+    chmod 750 /etc/bloonix/wtrm/pki
+    openssl req -new -x509 -nodes -out /etc/bloonix/wtrm/pki/server.cert -keyout /etc/bloonix/wtrm/pki/server.key -batch
+    chown root:bloonix /etc/bloonix/wtrm/pki/server.key /etc/bloonix/wtrm/pki/server.cert
+    chmod 640 /etc/bloonix/wtrm/pki/server.key /etc/bloonix/wtrm/pki/server.cert
+fi
+
+chown bloonix /var/log/bloonix /var/run/bloonix
+chmod 750 /var/log/bloonix
+chmod 755 /var/run/bloonix
