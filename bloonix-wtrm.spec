@@ -1,6 +1,6 @@
 Summary: Bloonix wtrm daemon
 Name: bloonix-wtrm
-Version: 0.9
+Version: 0.10
 Release: 1%{dist}
 License: Commercial
 Group: Utilities/System
@@ -116,6 +116,9 @@ rm -rf %{buildroot}
 %doc %attr(0444, root, root) %{docdir}/LICENSE
 
 %changelog
+* Mon Apr 04 2016 Jonny Schulz <js@bloonix.de> - 0.10-1
+- Check /bin/systemctl instead of /usr/lib/systemd to
+  determine if systemd is used.
 * Tue Mar 29 2016 Jonny Schulz <js@bloonix.de> - 0.9-1
 - Fixed systemctl errors.
 * Mon Mar 28 2016 Jonny Schulz <js@bloonix.de> - 0.8-1

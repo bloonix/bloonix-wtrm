@@ -5,7 +5,7 @@ set -e
 if [ "$1" = "remove" ] ; then
     echo "Removing bloonix-wtrm.."
 
-    if [ -e "/usr/lib/systemd" ] ; then
+    if [ -e "/bin/systemctl" ] ; then
         systemctl --no-reload disable bloonix-wtrm.service
         echo "Stopping bloonix-wtrm.."
         systemctl stop bloonix-wtrm.service

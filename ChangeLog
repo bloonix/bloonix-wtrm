@@ -1,3 +1,8 @@
+bloonix-wtrm (0.10) released at 2016-04-04
+
+    * Check /bin/systemctl instead of /usr/lib/systemd to
+      determine if systemd is used.
+
 bloonix-wtrm (0.9) released at 2016-03-29
 
     * Fixed systemctl errors.

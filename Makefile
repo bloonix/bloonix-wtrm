@@ -42,14 +42,17 @@ install:
 	./install-sh -d -m 0755 $(USRLIBDIR)/bloonix/etc/systemd;
 	./install-sh -c -m 0755 etc/init/bloonix-wtrm.service $(USRLIBDIR)/bloonix/etc/systemd/bloonix-wtrm.service;
 
-	if test "$(BUILDPKG)" = "0" ; then \
-		if test -d /usr/lib/systemd ; then \
-			./install-sh -d -m 0755 $(DESTDIR)/usr/lib/systemd/system/; \
-			./install-sh -c -m 0644 etc/init/bloonix-wtrm.service $(DESTDIR)/usr/lib/systemd/system/; \
+	if [ "$(BUILDPKG)" = "0" ] ; then \
+		if [ -e /bin/systemctl ] || [ -e /usr/bin/systemctl ] ; then \
+			if [ -e /lib/systemd/system/ ] ; then \
+				install -m 0644 etc/init/bloonix-wtrm.service $(DESTDIR)/lib/systemd/system/; \
+			elif [ -e /usr/lib/systemd/system/ ] ; then \
+				install -m 0644 etc/init/bloonix-wtrm.service $(DESTDIR)/usr/lib/systemd/system/; \
+			fi; \
 			systemctl daemon-reload; \
-		elif test -d /etc/init.d ; then \
-			./install-sh -c -m 0755 etc/init/bloonix-wtrm $(INITDIR)/bloonix-wtrm; \
 		fi; \
+		install -d -m 0755 $(INITDIR); \
+		install -m 0755 etc/init/bloonix-wtrm $(INITDIR)/; \
 	fi;
 
 clean:
