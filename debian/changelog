@@ -1,3 +1,9 @@
+bloonix-wtrm (0.11-1) unstable; urgency=low
+
+    * Fixed utf8 issues.
+
+ -- Jonny Schulz <js@bloonix.de>  Thu, 19 Jan 2017 13:11:13 +0100
+
 bloonix-wtrm (0.10-1) unstable; urgency=low
 
     * Check /bin/systemctl instead of /usr/lib/systemd to

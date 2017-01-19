@@ -238,7 +238,7 @@ sub test {
 
     open my $fh, ">", $config_json
         or die "unable to open file '$config_json' - $!";
-    print $fh $self->json->encode($self->req->{data});
+    print $fh $self->json->utf8->encode($self->req->{data});
     close $fh;
 
     my $command = "$phantomjs --ssl-protocol=tlsv1 --ignore-ssl-errors=yes $bloonix_wtrm_js file=$config_json";
