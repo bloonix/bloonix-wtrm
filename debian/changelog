@@ -1,3 +1,9 @@
+bloonix-wtrm (0.12-1) unstable; urgency=low
+
+    * Fixed ipaddr in logfiles.
+
+ -- Jonny Schulz <js@bloonix.de>  Tue, 11 Apr 2017 15:44:11 +0200
+
 bloonix-wtrm (0.11-1) unstable; urgency=low
 
     * Fixed utf8 issues.

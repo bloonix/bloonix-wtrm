@@ -61,7 +61,7 @@ sub run {
         my $time = Time::HiRes::gettimeofday();
         $self->proc->set_status_waiting;
         my $client = $self->io->accept or next;
-        $self->log->set_pattern("%X", "X", $client->sock->peeraddr);
+        $self->log->set_pattern("%X", "X", $client->sock->peerhost);
         $self->log->notice("request started (${time}s)");
         $self->process($client);
         $time = sprintf("%.3f", Time::HiRes::gettimeofday() - $time);

@@ -1,6 +1,6 @@
 Summary: Bloonix wtrm daemon
 Name: bloonix-wtrm
-Version: 0.11
+Version: 0.12
 Release: 1%{dist}
 License: Commercial
 Group: Utilities/System
@@ -116,6 +116,8 @@ rm -rf %{buildroot}
 %doc %attr(0444, root, root) %{docdir}/LICENSE
 
 %changelog
+* Tue Apr 11 2017 Jonny Schulz <js@bloonix.de> - 0.12-1
+- Fixed ipaddr in logfiles.
 * Thu Jan 19 2017 Jonny Schulz <js@bloonix.de> - 0.11-1
 - Fixed utf8 issues.
 * Mon Apr 04 2016 Jonny Schulz <js@bloonix.de> - 0.10-1
