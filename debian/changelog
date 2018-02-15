@@ -1,3 +1,9 @@
+bloonix-wtrm (0.13-1) unstable; urgency=low
+
+    * Removed --ssl-protocol.
+
+ -- Jonny Schulz <js@bloonix.de>  Thu, 15 Feb 2018 15:16:28 +0100
+
 bloonix-wtrm (0.12-1) unstable; urgency=low
 
     * Fixed ipaddr in logfiles.

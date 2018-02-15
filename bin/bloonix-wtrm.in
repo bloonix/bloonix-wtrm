@@ -241,7 +241,8 @@ sub test {
     print $fh $self->json->utf8->encode($self->req->{data});
     close $fh;
 
-    my $command = "$phantomjs --ssl-protocol=tlsv1 --ignore-ssl-errors=yes $bloonix_wtrm_js file=$config_json";
+    #my $command = "$phantomjs --ssl-protocol=tlsv1 --ignore-ssl-errors=yes $bloonix_wtrm_js file=$config_json";
+    my $command = "$phantomjs --ignore-ssl-errors=yes $bloonix_wtrm_js file=$config_json";
 
     if ($quick) {
         $command .= " noimg=yes";

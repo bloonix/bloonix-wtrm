@@ -1,6 +1,6 @@
 Summary: Bloonix wtrm daemon
 Name: bloonix-wtrm
-Version: 0.12
+Version: 0.13
 Release: 1%{dist}
 License: Commercial
 Group: Utilities/System
@@ -116,6 +116,8 @@ rm -rf %{buildroot}
 %doc %attr(0444, root, root) %{docdir}/LICENSE
 
 %changelog
+* Thu Feb 15 2018 Jonny Schulz <js@bloonix.de> - 0.13-1
+- Removed --ssl-protocol.
 * Tue Apr 11 2017 Jonny Schulz <js@bloonix.de> - 0.12-1
 - Fixed ipaddr in logfiles.
 * Thu Jan 19 2017 Jonny Schulz <js@bloonix.de> - 0.11-1
